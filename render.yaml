@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: fooddash-chatbot
+    runtime: python
+    plan: free
+    buildCommand: python -m py_compile assignment.py
+    startCommand: python assignment.py --web --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.4
+      - key: FOODDASH_ADMIN_PASSWORD
+        sync: false
+  - type: web
+    name: fooddash-ai-static
+    runtime: static
+    buildCommand: mkdir -p dist && cp shashwath.html dist/index.html && cp fooddash-logo.svg dist/fooddash-logo.svg
+    staticPublishPath: dist

@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f8f4">
+  <title>FoodDash — food, made easy</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #20291f;
+      --muted: #777f73;
+      --green: #356a43;
+      --green-dark: #254d31;
+      --green-light: #e9f0e7;
+      --cream: #f8f8f4;
+      --line: #e9e9e1;
+      --white: #fff;
+      --orange: #e18b4e;
+      --shadow: 0 12px 36px rgb(37 53 35 / 7%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--cream); color: var(--ink); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .shell { max-width: 1440px; min-height: 100vh; margin: auto; display: grid; grid-template-columns: 238px minmax(0, 1fr); }
+    .sidebar { position: sticky; top: 0; height: 100vh; padding: 30px 19px; border-right: 1px solid var(--line); background: #fbfbf8; display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; padding: 0 10px; }
+    .brand-logo { display: block; width: 174px; height: auto; }
+    .side-label { padding: 0 11px; margin: 40px 0 12px; color: #a2a69b; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+    .nav { display: grid; gap: 5px; }
+    .nav button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px; border: 0; border-radius: 10px; color: #6d7569; background: transparent; text-align: left; font-size: 13px; font-weight: 650; transition: .18s ease; }
+    .nav button:hover { color: var(--green-dark); background: #f0f3ed; }
+    .nav button.active { color: var(--green-dark); background: var(--green-light); }
+    .nav-icon { width: 20px; text-align: center; font-size: 16px; }
+    .side-card { margin-top: auto; padding: 17px; border-radius: 15px; background: #eef2e9; }
+    .side-card .spark { font-size: 21px; }
+    .side-card strong { display: block; margin: 9px 0 5px; font-size: 13px; }
+    .side-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .sidebar-foot { padding: 17px 10px 0; color: #9a9e94; font-size: 10px; }
+    main { min-width: 0; padding: 27px clamp(20px, 4vw, 56px) 50px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 34px; }
+    .location { display: flex; align-items: center; gap: 10px; }
+    .location-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: #eeefe8; }
+    .location small, .greeting small { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; }
+    .location strong { font-size: 13px; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: var(--green-dark); background: #e8eee4; font-size: 12px; font-weight: 800; }
+    .greeting h1 { margin: 0; font-size: 27px; font-weight: 720; letter-spacing: -1px; }
+    .greeting p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .page { display: none; }
+    .page.active { display: block; animation: appear .22s ease; }
+    @keyframes appear { from { opacity: .5; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .hero { position: relative; overflow: hidden; min-height: 218px; padding: 35px 38px; border-radius: 19px; color: white; background: var(--green-dark); display: flex; align-items: center; justify-content: space-between; }
+    .hero::after { content: ""; position: absolute; width: 290px; height: 290px; right: 15%; top: -155px; border: 1px solid rgb(255 255 255 / 10%); border-radius: 50%; box-shadow: 0 0 0 30px rgb(255 255 255 / 4%), 0 0 0 60px rgb(255 255 255 / 3%); }
+    .hero-copy { position: relative; z-index: 1; max-width: 390px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid rgb(255 255 255 / 20%); border-radius: 20px; color: #e0ecd8; font-size: 10px; font-weight: 700; letter-spacing: .4px; }
+    .hero h2 { margin: 17px 0 9px; font-size: clamp(25px, 3.4vw, 36px); line-height: 1.08; letter-spacing: -1.2px; }
+    .hero p { margin: 0 0 20px; color: #d4e1d0; font-size: 12px; line-height: 1.6; }
+    .hero-art { position: relative; z-index: 1; width: 170px; height: 150px; margin-right: 35px; border-radius: 50%; display: grid; place-items: center; background: #f2c379; box-shadow: 0 0 0 13px rgb(255 255 255 / 8%); font-size: 80px; transform: rotate(-7deg); }
+    .primary, .secondary { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 0 15px; border: 0; border-radius: 9px; font-size: 11px; font-weight: 750; transition: .16s ease; }
+    .primary { color: #fff; background: var(--green); }
+    .primary:hover { background: var(--green-dark); transform: translateY(-1px); }
+    .hero .primary { color: var(--green-dark); background: #fff; }
+    .hero .primary:hover { background: #f2f2ed; }
+    .secondary { border: 1px solid var(--line); color: var(--ink); background: #fff; }
+    .secondary:hover { border-color: #c9d4c5; background: #f8faf6; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin: 31px 0 15px; }
+    .section-head h2 { margin: 0; font-size: 16px; letter-spacing: -.3px; }
+    .section-head p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+    .text-button { padding: 4px 0; border: 0; color: var(--green); background: transparent; font-size: 11px; font-weight: 750; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 20px; }
+    .stat { padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+    .stat span { color: var(--muted); font-size: 10px; }
+    .stat strong { display: block; margin-top: 8px; font-size: 19px; letter-spacing: -.5px; }
+    .food-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .food-card { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; transition: .18s ease; }
+    .food-card:hover { border-color: #d8dfd3; box-shadow: var(--shadow); transform: translateY(-2px); }
+    .food-art { position: relative; height: 132px; display: grid; place-items: center; background: #f1eee5; font-size: 64px; }
+    .food-card:nth-child(3n + 2) .food-art { background: #e9eee5; }
+    .food-card:nth-child(3n) .food-art { background: #f4e9de; }
+    .food-tag { position: absolute; top: 11px; left: 11px; padding: 5px 8px; border-radius: 20px; color: #4d694d; background: rgb(255 255 255 / 88%); font-size: 9px; font-weight: 750; text-transform: capitalize; }
+    .food-body { padding: 13px; }
+    .food-title { display: flex; align-items: start; justify-content: space-between; gap: 7px; }
+    .food-title h3 { margin: 0; font-size: 12px; }
+    .rating { color: #9a671e; font-size: 10px; white-space: nowrap; }
+    .restaurant { margin: 5px 0 11px; color: var(--muted); font-size: 10px; }
+    .food-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-top: 10px; border-top: 1px solid #f0f0eb; }
+    .food-meta strong { font-size: 13px; }
+    .food-meta span { color: var(--muted); font-size: 9px; }
+    .add-button { width: 29px; height: 29px; flex: 0 0 auto; border: 0; border-radius: 9px; color: white; background: var(--green); font-size: 17px; line-height: 1; }
+    .add-button:hover { background: var(--green-dark); }
+    .cart-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 11px; }
+    .cart-item strong { display: block; margin-bottom: 4px; }
+    .cart-item small { color: var(--muted); }
+    .cart-controls { display: flex; align-items: center; gap: 7px; }
+    .cart-controls button { min-width: 28px; min-height: 28px; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+    .cart-controls .cart-remove { color: #8c342e; font-size: 10px; }
+    .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 22px 0 16px; }
+    .search { min-width: 190px; flex: 1; }
+    .field, .search input, select { width: 100%; min-height: 39px; padding: 0 12px; border: 1px solid #e4e6df; border-radius: 9px; outline: none; color: var(--ink); background: #fff; font-size: 11px; }
+    .field:focus, .search input:focus, select:focus { border-color: #8ba88a; box-shadow: 0 0 0 3px rgb(70 118 77 / 10%); }
+    .search input { min-width: 190px; }
+    .filter-select { width: auto; min-width: 145px; }
+    .recommend-layout { display: grid; grid-template-columns: 265px minmax(0, 1fr); gap: 22px; margin-top: 22px; align-items: start; }
+    .filter-panel, .recommend-results { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .filter-panel h2 { margin: 0 0 17px; font-size: 14px; }
+    .form-field { display: grid; gap: 7px; margin-bottom: 14px; }
+    .form-field label { color: #626b60; font-size: 10px; font-weight: 700; }
+    .form-field small { color: var(--muted); font-size: 9px; }
+    .filter-panel .primary { width: 100%; margin-top: 3px; }
+    .recommend-results h2 { margin: 0; font-size: 14px; }
+    .result-hint { margin: 6px 0 16px; color: var(--muted); font-size: 10px; }
+    .result-card { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #f0f0eb; }
+    .result-emoji { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 12px; background: #f2f1e9; font-size: 28px; }
+    .result-card h3 { margin: 0 0 4px; font-size: 11px; }
+    .result-card p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
+    .result-price { text-align: right; }
+    .result-price strong { display: block; margin-bottom: 7px; font-size: 11px; }
+    .empty { padding: 29px 15px; border-radius: 12px; color: var(--muted); background: #f8f8f4; text-align: center; font-size: 11px; line-height: 1.7; }
+    .chat-panel { max-width: 820px; margin-top: 22px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow); }
+    .chat-header { display: flex; align-items: center; gap: 11px; padding: 15px 18px; border-bottom: 1px solid var(--line); }
+    .chat-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; color: white; background: var(--green); font-size: 18px; }
+    .chat-header strong, .chat-header small { display: block; }
+    .chat-header strong { font-size: 12px; }
+    .chat-header small { margin-top: 4px; color: var(--muted); font-size: 9px; }
+    .online-dot { width: 8px; height: 8px; margin-left: auto; border-radius: 50%; background: #54a66a; box-shadow: 0 0 0 4px #e9f4e8; }
+    .chat-messages { min-height: 260px; max-height: 460px; overflow-y: auto; padding: 20px; background: #fcfcfa; }
+    .chat-message { display: flex; margin: 0 0 14px; }
+    .chat-message.user { justify-content: flex-end; }
+    .chat-bubble { max-width: min(88%, 560px); padding: 11px 14px; border-radius: 13px 13px 13px 4px; color: #394337; background: #f0f2ec; font-size: 11px; line-height: 1.65; overflow-wrap: anywhere; }
+    .chat-message.user .chat-bubble { border-radius: 13px 13px 4px 13px; color: white; background: var(--green); }
+    .chat-results { display: grid; gap: 9px; width: min(100%, 650px); margin: -5px 0 15px 0; }
+    .chat-result { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .chat-result-emoji { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: #f2f1e9; font-size: 22px; }
+    .chat-result h3 { margin: 0 0 4px; font-size: 11px; }
+    .chat-result p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+    .chat-result-action { text-align: right; }
+    .chat-result-action strong { display: block; margin-bottom: 6px; font-size: 10px; }
+    .chat-result-action .primary { min-height: 30px; padding: 0 10px; font-size: 9px; }
+    .chat-suggestions { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 13px; }
+    .chat-chip { flex: 0 0 auto; padding: 7px 10px; border: 1px solid #e1e7dc; border-radius: 20px; color: var(--green-dark); background: white; font-size: 9px; }
+    .chat-chip:hover { background: var(--green-light); }
+    .chat-form { display: flex; gap: 9px; padding: 13px 16px; border-top: 1px solid var(--line); }
+    .chat-form input { min-width: 0; flex: 1; min-height: 40px; padding: 0 13px; border: 1px solid #e4e6df; border-radius: 10px; outline: none; font-size: 11px; }
+    .chat-form input:focus { border-color: #8ba88a; box-shadow: 0 0 0 3px rgb(70 118 77 / 10%); }
+    .chat-form .primary { min-height: 40px; }
+    .chat-note { margin: 0; padding: 0 16px 13px; color: #92988d; font-size: 9px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .order-list { display: grid; gap: 11px; margin-top: 20px; }
+    .order-card { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+    .order-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .order-badge { width: 43px; height: 43px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 12px; background: var(--green-light); font-size: 22px; }
+    .order-info h3 { margin: 0 0 5px; font-size: 11px; }
+    .order-info p { margin: 0; color: var(--muted); font-size: 9px; }
+    .order-actions { display: flex; align-items: center; gap: 9px; }
+    .status { padding: 6px 8px; border-radius: 20px; color: #567650; background: #edf4e9; font-size: 9px; white-space: nowrap; }
+    .order-total { font-size: 11px; font-weight: 750; white-space: nowrap; }
+    .order-countdown { color: var(--green-dark); font-weight: 700; }
+    .order-countdown.overdue { color: #a13e32; }
+    .admin-panel { max-width: 980px; margin-top: 22px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .admin-login { max-width: 370px; }
+    .admin-login h2, .admin-section h2 { margin: 0 0 7px; font-size: 15px; }
+    .admin-login p, .admin-section > p { margin: 0 0 16px; color: var(--muted); font-size: 10px; line-height: 1.6; }
+    .admin-login .primary { width: 100%; }
+    .admin-notice { margin-top: 12px; color: #8c342e; font-size: 10px; line-height: 1.5; }
+    .admin-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+    .admin-toolbar h2 { margin: 0; font-size: 16px; }
+    .admin-counts { display: flex; gap: 9px; margin: 15px 0 23px; }
+    .admin-count { padding: 9px 12px; border-radius: 9px; color: var(--green-dark); background: var(--green-light); font-size: 10px; }
+    .admin-count strong { margin-left: 4px; }
+    .admin-section { margin-top: 20px; }
+    .admin-orders { display: grid; gap: 10px; }
+    .admin-order { padding: 14px; border: 1px solid var(--line); border-radius: 11px; }
+    .admin-order-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+    .admin-order h3 { margin: 0; font-size: 12px; }
+    .admin-order-head span, .admin-order-details { color: var(--muted); font-size: 9px; line-height: 1.7; }
+    .admin-order-details { overflow-wrap: anywhere; }
+    .admin-countdown { display: inline-block; margin-top: 4px; }
+    .admin-order-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .admin-order-actions select { width: auto; min-height: 32px; font-size: 10px; }
+    .admin-order-actions .primary { min-height: 32px; font-size: 10px; }
+    .hidden { display: none !important; }
+    .empty-state { padding: 47px 20px; border: 1px dashed #d8ddd3; border-radius: 14px; background: #fbfbf8; text-align: center; }
+    .empty-state .icon { font-size: 35px; }
+    .empty-state h3 { margin: 11px 0 5px; font-size: 13px; }
+    .empty-state p { margin: 0 0 15px; color: var(--muted); font-size: 10px; }
+    .modal-backdrop { position: fixed; z-index: 10; inset: 0; padding: 20px; display: none; place-items: center; background: rgb(20 31 21 / 46%); backdrop-filter: blur(3px); }
+    .modal-backdrop.open { display: grid; }
+    .modal { width: min(100%, 440px); max-height: min(92vh, 760px); overflow: auto; padding: 23px; border-radius: 16px; background: #fff; box-shadow: 0 24px 90px rgb(0 0 0 / 20%); }
+    .modal-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 17px; }
+    .modal-head h2 { margin: 0; font-size: 17px; }
+    .modal-head p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+    .close-button { width: 30px; height: 30px; border: 0; border-radius: 9px; color: #656d62; background: #f1f2ed; font-size: 17px; }
+    .checkout-item { display: flex; justify-content: space-between; align-items: center; padding: 13px; margin-bottom: 16px; border-radius: 11px; background: #f5f7f2; font-size: 11px; }
+    .checkout-item span { color: var(--muted); }
+    .bill { padding-top: 8px; border-top: 1px solid var(--line); }
+    .bill-row { display: flex; justify-content: space-between; padding: 6px 0; color: var(--muted); font-size: 10px; }
+    .bill-row.total { padding-top: 10px; color: var(--ink); font-size: 13px; font-weight: 800; }
+    .modal-submit { width: 100%; margin-top: 15px; }
+    .invoice-modal { width: min(100%, 630px); padding: 30px; }
+    .invoice-brand { padding-bottom: 18px; border-bottom: 2px solid var(--green); display: flex; justify-content: space-between; gap: 16px; }
+    .invoice-brand h2 { margin: 0 0 5px; color: var(--green); font-size: 23px; }
+    .invoice-brand p, .invoice-meta { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+    .invoice-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 17px 0; }
+    .invoice-box { padding: 12px; border: 1px solid var(--line); border-radius: 9px; font-size: 10px; line-height: 1.7; overflow-wrap: anywhere; }
+    .invoice-box strong { display: block; margin-bottom: 3px; color: var(--muted); font-size: 9px; letter-spacing: .7px; text-transform: uppercase; }
+    .invoice-line { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 10px; }
+    .invoice-totals { max-width: 260px; margin: 10px 0 0 auto; }
+    .invoice-note { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; line-height: 1.6; }
+    .toast { position: fixed; z-index: 20; right: 22px; bottom: 22px; max-width: min(400px, calc(100vw - 44px)); padding: 12px 16px; border-radius: 10px; color: white; background: #263f2b; box-shadow: var(--shadow); font-size: 11px; opacity: 0; pointer-events: none; transform: translateY(8px); transition: .2s ease; }
+    .toast.show { opacity: 1; transform: none; }
+    .toast.error { background: #8c342e; }
+    @media (max-width: 1000px) {
+      .shell { grid-template-columns: 205px minmax(0, 1fr); }
+      .food-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero-art { margin-right: 12px; transform: scale(.85) rotate(-7deg); }
+    }
+    @media (max-width: 700px) {
+      .shell { display: block; padding-bottom: 63px; }
+      .sidebar { position: fixed; z-index: 5; top: auto; right: 0; bottom: 0; left: 0; width: 100%; height: auto; padding: 7px 10px max(7px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); border-right: 0; background: rgb(251 251 248 / 96%); backdrop-filter: blur(12px); }
+      .brand, .side-label, .side-card, .sidebar-foot { display: none; }
+      .nav { grid-template-columns: repeat(5, 1fr); gap: 3px; }
+      .nav button { min-height: 47px; padding: 5px 3px; justify-content: center; flex-direction: column; gap: 1px; font-size: 9px; }
+      .nav-icon { font-size: 16px; }
+      main { padding: 20px 16px 30px; }
+      .topbar { margin-bottom: 23px; }
+      .hero { min-height: 196px; padding: 24px; }
+      .hero-art { width: 105px; height: 105px; margin-right: 0; font-size: 53px; }
+      .hero h2 { font-size: 26px; }
+      .recommend-layout { grid-template-columns: 1fr; gap: 13px; }
+      .stats { gap: 8px; }
+      .stat { padding: 12px; }
+    }
+    @media (max-width: 460px) {
+      .greeting h1 { font-size: 23px; }
+      .location { gap: 7px; }
+      .location-mark { width: 34px; height: 34px; }
+      .hero-art { position: absolute; right: 2px; bottom: -6px; opacity: .75; }
+      .hero-copy { max-width: 275px; }
+      .hero { min-height: 210px; padding: 23px 20px; }
+      .food-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+      .food-art { height: 105px; font-size: 50px; }
+      .food-body { padding: 10px; }
+      .food-title h3 { font-size: 10px; }
+      .food-meta { flex-wrap: wrap; }
+      .filter-select { flex: 1; }
+      .search { flex-basis: 100%; }
+      .result-card { grid-template-columns: 45px minmax(0, 1fr); }
+      .result-emoji { width: 43px; height: 43px; }
+      .result-price { grid-column: 2; display: flex; align-items: center; justify-content: space-between; text-align: left; }
+      .result-price strong { margin: 0; }
+      .order-card { align-items: start; flex-direction: column; }
+      .order-actions { width: 100%; justify-content: space-between; }
+      .invoice-modal { padding: 20px; }
+      .invoice-parties { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body * { visibility: hidden !important; }
+      #invoice-modal, #invoice-modal * { visibility: visible !important; }
+      #invoice-modal { position: absolute; inset: 0; display: block !important; padding: 0; background: white; }
+      #invoice-modal .modal { width: 100%; max-height: none; overflow: visible; box-shadow: none; }
+      #invoice-actions, .close-button { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><img class="brand-logo" src="/fooddash-logo.svg" alt="FoodDash"></div>
+      <div class="side-label">Workspace</div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-page="home"><span class="nav-icon">⌂</span>Overview</button>
+        <button data-page="menu"><span class="nav-icon">▦</span>Explore menu</button>
+        <button data-page="chat"><span class="nav-icon">✦</span>Chat assistant</button>
+        <button data-page="orders"><span class="nav-icon">◷</span>My orders</button>
+        <button data-page="admin"><span class="nav-icon">▣</span>Admin</button>
+      </nav>
+      <div class="side-card"><span class="spark">✦</span><strong>Your own food assistant</strong><p>Find something delicious that fits your budget and your day.</p></div>
+      <div class="sidebar-foot">FoodDash classroom demo · Sample prices in ₹</div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div class="location"><span class="location-mark">⌖</span><div><small>DELIVERING TO</small><strong id="location-label">Campus</strong></div></div>
+        <div class="top-actions"><button class="primary" type="button" data-open-cart>Cart (<span id="cart-count">0</span>)</button><div class="avatar" aria-label="FoodDash user">FD</div></div>
+      </header>
+
+      <section class="page active" id="page-home">
+        <div class="greeting"><h1>Good food, good mood <span aria-hidden="true">☀</span></h1><p>Discover a new favorite, or settle into an old one.</p></div>
+        <section class="hero" aria-label="Meal recommendations">
+          <div class="hero-copy"><span class="eyebrow">✦ YOUR FOOD, YOUR WAY</span><h2>A little hungry?<br>We've got you.</h2><p>Chat with your food assistant to find a meal that fits your cravings, budget, and delivery time.</p><button class="primary" data-go="chat">Chat with the assistant <span>→</span></button></div>
+          <div class="hero-art" aria-hidden="true">🥗</div>
+        </section>
+        <div class="stats">
+          <div class="stat"><span>Meals to explore</span><strong id="stat-meals">23</strong></div>
+          <div class="stat"><span>Your past orders</span><strong id="stat-orders">0</strong></div>
+          <div class="stat"><span>Popular near you</span><strong>4.8 <span style="color:#d18c32">★</span></strong></div>
+        </div>
+        <div class="section-head"><div><h2>Popular right now</h2><p>Good things are cooking around you.</p></div><button class="text-button" data-go="menu">See full menu →</button></div>
+        <div class="food-grid" id="home-grid"></div>
+      </section>
+
+      <section class="page" id="page-menu">
+        <div class="greeting"><h1>Explore the menu</h1><p>Fresh picks from the restaurants around you.</p></div>
+        <div class="toolbar">
+          <label class="search"><input id="menu-search" type="search" placeholder="⌕  Search meals or restaurants..." aria-label="Search meals or restaurants"></label>
+          <select class="filter-select" id="menu-category" aria-label="Filter by food category">
+            <option value="all">All food types</option><option value="vegetarian">Vegetarian</option><option value="vegan">Vegan</option><option value="non-vegetarian">Non-vegetarian</option>
+          </select>
+          <select class="filter-select" id="menu-location" aria-label="Filter by restaurant location"></select>
+        </div>
+        <div class="food-grid" id="menu-grid"></div>
+      </section>
+
+      <section class="page" id="page-recommend">
+        <div class="greeting"><h1>Made for your mood</h1><p>A few details help us find a meal that fits just right.</p></div>
+        <div class="recommend-layout">
+          <form class="filter-panel" id="recommend-form">
+            <h2>What sounds good?</h2>
+            <div class="form-field"><label for="recommend-location">Delivery area</label><select id="recommend-location"></select></div>
+            <div class="form-field"><label for="recommend-category">Food type</label><select id="recommend-category"><option value="all">Anything goes</option><option value="vegetarian">Vegetarian</option><option value="vegan">Vegan</option><option value="non-vegetarian">Non-vegetarian</option></select></div>
+            <div class="form-field"><label for="recommend-budget">Your meal budget</label><input class="field" id="recommend-budget" type="number" min="1" step="1" value="250" required><small>Maximum meal price in rupees (before delivery and tax).</small></div>
+            <div class="form-field"><label for="recommend-eta">Ready within</label><input class="field" id="recommend-eta" type="number" min="1" step="1" value="40" required></div>
+            <button class="primary" type="submit">Find my matches <span>→</span></button>
+          </form>
+          <section class="recommend-results" aria-live="polite"><h2 id="recommend-title">A few good ideas</h2><p class="result-hint" id="recommend-hint">Choose your preferences and we'll do the sorting.</p><div id="recommend-list"><div class="empty">A good meal is just a few choices away. Pick your preferences to get started.</div></div></section>
+        </div>
+      </section>
+
+      <section class="page" id="page-chat">
+        <div class="greeting"><h1>Chat with your food assistant</h1><p>Tell me what you're craving, your budget, or when you'd like it delivered.</p></div>
+        <section class="chat-panel" aria-label="FoodDash chatbot">
+          <header class="chat-header"><span class="chat-avatar" aria-hidden="true">✦</span><div><strong>FoodDash assistant</strong><small>Here to help you find a meal · Demo chatbot</small></div><span class="online-dot" aria-label="Available"></span></header>
+          <div class="chat-messages" id="chat-messages" aria-live="polite" aria-relevant="additions">
+            <div class="chat-message assistant"><div class="chat-bubble">Hi! I'm your FoodDash food assistant. Tell me what you feel like eating, your budget, or delivery area. For example: <strong>“Show me vegan food under ₹200 near Campus.”</strong></div></div>
+          </div>
+          <div class="chat-suggestions" aria-label="Try asking">
+            <button class="chat-chip" type="button" data-chat-prompt="Show me vegetarian meals under ₹200">Vegetarian under ₹200</button>
+            <button class="chat-chip" type="button" data-chat-prompt="I want something spicy">Something spicy</button>
+            <button class="chat-chip" type="button" data-chat-prompt="What can I get near North in 30 minutes?">Near North · 30 min</button>
+          </div>
+          <form class="chat-form" id="chat-form">
+            <label class="sr-only" for="chat-input">Message the food assistant</label>
+            <input id="chat-input" type="text" maxlength="240" autocomplete="off" placeholder="Type a message, e.g. vegan food under ₹200..." required>
+            <button class="primary" type="submit" aria-label="Send message">Send <span aria-hidden="true">↑</span></button>
+          </form>
+          <p class="chat-note">Python-powered classroom demo. Chat matching runs locally on your computer; it doesn't connect to an online AI service.</p>
+        </section>
+      </section>
+
+      <section class="page" id="page-orders">
+        <div class="greeting"><h1>Your orders</h1><p>Your past FoodDash orders, all in one place.</p></div>
+        <div class="order-list" id="orders-list"></div>
+      </section>
+
+      <section class="page" id="page-admin">
+        <div class="greeting"><h1>Admin order dashboard</h1><p>Review incoming orders, update their status, and see completed order history.</p></div>
+        <section class="admin-panel" aria-live="polite">
+          <form class="admin-login hidden" id="admin-login-form">
+            <h2>Admin sign in</h2>
+            <p>Sign in to see orders placed through this FoodDash website.</p>
+            <div class="form-field"><label for="admin-password">Admin password</label><input class="field" id="admin-password" type="password" autocomplete="current-password" required></div>
+            <button class="primary" type="submit">Sign in</button>
+            <p class="admin-notice hidden" id="admin-notice"></p>
+          </form>
+          <div class="admin-dashboard hidden" id="admin-dashboard">
+            <div class="admin-toolbar"><h2>Order overview</h2><div><button class="secondary" type="button" id="admin-refresh">Refresh</button> <button class="secondary" type="button" id="admin-logout">Sign out</button></div></div>
+            <div class="admin-counts"><div class="admin-count">Current<strong id="admin-current-count">0</strong></div><div class="admin-count">Past<strong id="admin-past-count">0</strong></div><div class="admin-count">All<strong id="admin-total-count">0</strong></div></div>
+            <section class="admin-section"><h2>Current orders</h2><p>Orders not yet delivered or cancelled.</p><div class="admin-orders" id="admin-current-orders"></div></section>
+            <section class="admin-section"><h2>Past orders</h2><p>Delivered and cancelled orders.</p><div class="admin-orders" id="admin-past-orders"></div></section>
+          </div>
+          <div class="admin-login hidden" id="admin-unconfigured">
+            <h2>Admin login is not configured</h2>
+            <p>Set FOODDASH_ADMIN_PASSWORD in the server environment before starting the Python app. Do not share the password.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+    <form class="modal" id="checkout-form">
+      <div class="modal-head"><div><h2 id="checkout-title">Your cart</h2><p>Review your items, then add delivery details.</p></div><button class="close-button" type="button" data-close="checkout-modal" aria-label="Close">×</button></div>
+      <div id="checkout-summary"></div>
+      <div class="form-field"><label for="customer-name">Your name</label><input class="field" id="customer-name" maxlength="80" placeholder="e.g. Keshav"></div>
+      <div class="form-field"><label for="customer-phone">Phone number <span style="font-weight:400">(optional)</span></label><input class="field" id="customer-phone" type="tel" maxlength="30" placeholder="For delivery updates"></div>
+      <div class="form-field"><label for="delivery-address">Delivery address</label><input class="field" id="delivery-address" maxlength="160" placeholder="Street, building, and any helpful details" required></div>
+      <button class="primary modal-submit" id="place-order-button" type="submit">Place demo order</button>
+    </form>
+  </div>
+
+  <div class="modal-backdrop" id="invoice-modal" role="dialog" aria-modal="true" aria-labelledby="invoice-title">
+    <section class="modal invoice-modal">
+      <div class="modal-head"><div><h2 id="invoice-title">Your invoice</h2><p>FoodDash classroom demo · Sample tax rate</p></div><button class="close-button" type="button" data-close="invoice-modal" aria-label="Close">×</button></div>
+      <div id="invoice-content"></div>
+      <div id="invoice-actions" style="display:flex;justify-content:flex-end;gap:9px;margin-top:16px"><button class="secondary" type="button" data-close="invoice-modal">Done</button><button class="primary" type="button" id="print-invoice">Print / save PDF</button></div>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+    const LOCATIONS = {
+      Campus: [0, 0],
+      North: [0, 4],
+      South: [0, -4],
+      East: [4, 0],
+      West: [-4, 0]
+    };
+    const MENU = [
+      { id: 1, name: "Paneer Wrap", restaurant: "Green Bowl", location: "Campus", category: "vegetarian", price: 150, prep: 12, rating: 4.7, tags: ["paneer", "spicy", "wrap"], emoji: "🌯" },
+      { id: 2, name: "Veggie Burger", restaurant: "Green Bowl", location: "Campus", category: "vegetarian", price: 180, prep: 15, rating: 4.5, tags: ["burger", "cheese", "mild"], emoji: "🍔" },
+      { id: 3, name: "Masala Dosa", restaurant: "South Spice", location: "South", category: "vegetarian", price: 120, prep: 14, rating: 4.6, tags: ["south indian", "spicy", "crispy"], emoji: "🥞" },
+      { id: 4, name: "Veg Thali", restaurant: "South Spice", location: "South", category: "vegetarian", price: 210, prep: 18, rating: 4.8, tags: ["indian", "thali", "mild"], emoji: "🍛" },
+      { id: 5, name: "Chicken Biryani", restaurant: "Spice Route", location: "East", category: "non-vegetarian", price: 240, prep: 20, rating: 4.8, tags: ["chicken", "rice", "spicy"], emoji: "🍲" },
+      { id: 6, name: "Chicken Sandwich", restaurant: "North Kitchen", location: "North", category: "non-vegetarian", price: 170, prep: 10, rating: 4.3, tags: ["chicken", "sandwich", "mild"], emoji: "🥪" },
+      { id: 7, name: "Falafel Bowl", restaurant: "Green Bowl", location: "Campus", category: "vegan", price: 190, prep: 13, rating: 4.6, tags: ["vegan", "healthy", "mild"], emoji: "🥙" },
+      { id: 8, name: "Mushroom Noodles", restaurant: "West Wok", location: "West", category: "vegan", price: 160, prep: 11, rating: 4.4, tags: ["vegan", "noodles", "spicy"], emoji: "🍜" },
+      { id: 9, name: "Aloo Tikki Burger", restaurant: "Green Bowl", location: "Campus", category: "vegetarian", price: 130, prep: 12, rating: 4.5, tags: ["burger", "potato", "crispy"], emoji: "🍔" },
+      { id: 10, name: "Chole Rice Bowl", restaurant: "South Spice", location: "South", category: "vegan", price: 175, prep: 16, rating: 4.6, tags: ["chickpea", "rice", "spicy", "vegan"], emoji: "🍚" },
+      { id: 11, name: "Margherita Pizza", restaurant: "Campus Oven", location: "Campus", category: "vegetarian", price: 220, prep: 18, rating: 4.7, tags: ["pizza", "cheese", "basil"], emoji: "🍕" },
+      { id: 12, name: "Paneer Tikka Bowl", restaurant: "Spice Route", location: "East", category: "vegetarian", price: 230, prep: 19, rating: 4.8, tags: ["paneer", "tikka", "spicy"], emoji: "🍢" },
+      { id: 13, name: "Veg Hakka Noodles", restaurant: "West Wok", location: "West", category: "vegan", price: 180, prep: 14, rating: 4.5, tags: ["noodles", "vegan", "mild"], emoji: "🍜" },
+      { id: 14, name: "Grilled Chicken Bowl", restaurant: "North Kitchen", location: "North", category: "non-vegetarian", price: 260, prep: 18, rating: 4.8, tags: ["chicken", "healthy", "rice"], emoji: "🍗" },
+      { id: 15, name: "Egg Masala Roll", restaurant: "Spice Route", location: "East", category: "non-vegetarian", price: 145, prep: 11, rating: 4.4, tags: ["egg", "roll", "spicy"], emoji: "🌯" },
+      { id: 16, name: "Rajma Chawal", restaurant: "South Spice", location: "South", category: "vegan", price: 160, prep: 17, rating: 4.6, tags: ["kidney beans", "rice", "vegan"], emoji: "🍛" },
+      { id: 17, name: "BBQ Chicken Wrap", restaurant: "North Kitchen", location: "North", category: "non-vegetarian", price: 210, prep: 13, rating: 4.5, tags: ["chicken", "wrap", "barbecue"], emoji: "🌯" },
+      { id: 18, name: "Spinach Corn Sandwich", restaurant: "Green Bowl", location: "Campus", category: "vegetarian", price: 155, prep: 10, rating: 4.3, tags: ["spinach", "corn", "sandwich"], emoji: "🥪" },
+      { id: 19, name: "Tofu Stir-Fry", restaurant: "West Wok", location: "West", category: "vegan", price: 205, prep: 16, rating: 4.7, tags: ["tofu", "healthy", "spicy"], emoji: "🥘" },
+      { id: 20, name: "Fish Curry Rice", restaurant: "Coastal Kitchen", location: "East", category: "non-vegetarian", price: 280, prep: 22, rating: 4.8, tags: ["fish", "curry", "rice", "spicy"], emoji: "🐟" },
+      { id: 21, name: "Mushroom Cheese Toast", restaurant: "Campus Oven", location: "Campus", category: "vegetarian", price: 140, prep: 9, rating: 4.4, tags: ["mushroom", "cheese", "toast"], emoji: "🍞" },
+      { id: 22, name: "Lentil Quinoa Salad", restaurant: "Green Bowl", location: "Campus", category: "vegan", price: 215, prep: 15, rating: 4.7, tags: ["lentil", "quinoa", "healthy", "vegan"], emoji: "🥗" },
+      { id: 23, name: "Chicken Tikka Rice", restaurant: "Spice Route", location: "East", category: "non-vegetarian", price: 250, prep: 20, rating: 4.7, tags: ["chicken", "rice", "tikka", "spicy"], emoji: "🍗" }
+    ];
+    const STORAGE_KEY = "fooddash-demo-v1";
+    const TAX_RATE = 0.05;
+    let state = { order_history: [], orders: [], cart: [] };
+    let selectedLocation = "Campus";
+    const chatConversationId = window.crypto && typeof window.crypto.randomUUID === "function"
+      ? window.crypto.randomUUID()
+      : `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    let chatRequestPending = false;
+    let toastTimer;
+
+    const byId = (id) => document.getElementById(id);
+    const money = (amount) => `₹${Number(amount).toFixed(2)}`;
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[character]);
+
+    function notify(message, isError = false) {
+      const toast = byId("toast");
+      toast.textContent = message;
+      toast.classList.toggle("error", isError);
+      toast.classList.add("show");
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => toast.classList.remove("show"), 3600);
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        state = {
+          order_history: Array.isArray(saved.order_history) ? saved.order_history.filter((item) => typeof item === "string") : [],
+          orders: Array.isArray(saved.orders) ? saved.orders.filter((order) => order && typeof order === "object") : [],
+          cart: Array.isArray(saved.cart) ? saved.cart.filter((item) => item && Number.isInteger(item.meal_id) && MENU.some((meal) => meal.id === item.meal_id) && Number.isInteger(item.quantity) && item.quantity > 0 && item.quantity <= 20) : []
+        };
+      } catch (error) {
+        state = { order_history: [], orders: [], cart: [] };
+        notify("Saved orders couldn't be read from this browser. New orders will only last for this session.", true);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        return true;
+      } catch (error) {
+        notify("Order placed, but the browser couldn't save it. Keep this page open to view it.", true);
+        return false;
+      }
+    }
+
+    function cartItems() {
+      return state.cart.map((entry) => {
+        const meal = MENU.find((item) => item.id === entry.meal_id);
+        return meal ? { meal, quantity: entry.quantity } : null;
+      }).filter(Boolean);
+    }
+
+    function updateCartCount() {
+      byId("cart-count").textContent = String(state.cart.reduce((total, item) => total + item.quantity, 0));
+    }
+
+    function addToCart(meal) {
+      const entry = state.cart.find((item) => item.meal_id === meal.id);
+      if (entry && entry.quantity >= 20) {
+        notify("You can add up to 20 of each dish.", true);
+        return;
+      }
+      if (entry) entry.quantity += 1;
+      else state.cart.push({ meal_id: meal.id, quantity: 1 });
+      saveState();
+      updateCartCount();
+      notify(`${meal.name} added to your cart.`);
+    }
+
+    function distanceKm(customerLocation, restaurantLocation) {
+      const [x1, y1] = LOCATIONS[customerLocation];
+      const [x2, y2] = LOCATIONS[restaurantLocation];
+      return Math.hypot(x1 - x2, y1 - y2) * 1.2;
+    }
+
+    function estimateDelivery(meal, customerLocation) {
+      const distance = distanceKm(customerLocation, meal.location);
+      const travelMinutes = Math.max(5, Math.ceil(distance * 3));
+      return { distance, eta: meal.prep + travelMinutes };
+    }
+
+    function recommendationScore(meal, budget, eta) {
+      const pastOrders = state.order_history.filter((item) => item === meal.name).length;
+      const budgetFit = Math.max(0, (budget - meal.price) / Math.max(budget, 1));
+      return meal.rating * 2 + budgetFit * 3 + Math.max(0, 30 - eta) / 10 + Math.min(pastOrders, 3) * 1.5;
+    }
+
+    function appendChatMessage(message, sender = "assistant") {
+      const row = document.createElement("div");
+      row.className = `chat-message ${sender}`;
+      row.innerHTML = `<div class="chat-bubble">${escapeHtml(message)}</div>`;
+      byId("chat-messages").append(row);
+      byId("chat-messages").scrollTop = byId("chat-messages").scrollHeight;
+    }
+
+    function appendChatResults(meals) {
+      if (!meals.length) return;
+      const results = document.createElement("div");
+      results.className = "chat-results";
+      results.innerHTML = meals.map((meal) => `<article class="chat-result">
+        <span class="chat-result-emoji" aria-hidden="true">${escapeHtml(meal.emoji)}</span>
+        <div><h3>${escapeHtml(meal.name)} <span class="rating">★ ${Number(meal.rating).toFixed(1)}</span></h3>
+          <p>${escapeHtml(meal.restaurant)} · ${escapeHtml(meal.category)}<br>◷ ${escapeHtml(meal.eta)} min · ${escapeHtml(meal.distance)} km away</p></div>
+        <div class="chat-result-action"><strong>${money(meal.price)}</strong><button class="primary" type="button" data-add-cart="${escapeHtml(meal.id)}">Add</button></div>
+      </article>`).join("");
+      byId("chat-messages").append(results);
+      byId("chat-messages").scrollTop = byId("chat-messages").scrollHeight;
+    }
+
+    async function sendChatMessage(message) {
+      const text = message.trim();
+      if (!text || chatRequestPending) return;
+      appendChatMessage(text, "user");
+      chatRequestPending = true;
+      const sendButton = byId("chat-form").querySelector("button[type='submit']");
+      sendButton.disabled = true;
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            conversation_id: chatConversationId,
+            order_history: state.order_history.slice(-20),
+            orders: state.orders.slice(-20).map(({ order_id, meal, status }) => ({ order_id, meal, status }))
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "The Python chatbot returned an error.");
+        if (result.location) {
+          selectedLocation = result.location;
+          byId("location-label").textContent = selectedLocation;
+        }
+        appendChatMessage(result.reply);
+        appendChatResults(result.meals || []);
+      } catch (error) {
+        appendChatMessage(`I couldn't reach the Python chatbot. Start it with “python assignment.py --web” and open http://127.0.0.1:8000/. (${error.message})`);
+      } finally {
+        chatRequestPending = false;
+        sendButton.disabled = false;
+      }
+    }
+
+    function mealCard(meal) {
+      const travel = estimateDelivery(meal, selectedLocation);
+      return `<article class="food-card">
+        <div class="food-art"><span aria-hidden="true">${meal.emoji}</span><span class="food-tag">${escapeHtml(meal.category)}</span></div>
+        <div class="food-body"><div class="food-title"><h3>${escapeHtml(meal.name)}</h3><span class="rating">★ ${meal.rating.toFixed(1)}</span></div>
+          <p class="restaurant">${escapeHtml(meal.restaurant)} · ${escapeHtml(meal.location)}</p>
+          <div class="food-meta"><strong>₹${meal.price}</strong><span>◷ ${travel.eta} min</span><button class="add-button" type="button" data-add-cart="${meal.id}" aria-label="Add ${escapeHtml(meal.name)} to cart">+</button></div>
+        </div>
+      </article>`;
+    }
+
+    function renderHome() {
+      byId("home-grid").innerHTML = MENU.slice(0, 3).map(mealCard).join("");
+      byId("stat-meals").textContent = String(MENU.length);
+      byId("stat-orders").textContent = String(state.orders.length);
+      byId("location-label").textContent = selectedLocation;
+    }
+
+    function renderMenu() {
+      const query = byId("menu-search").value.trim().toLowerCase();
+      const category = byId("menu-category").value;
+      const restaurantLocation = byId("menu-location").value;
+      const matches = MENU.filter((meal) => {
+        const matchesText = `${meal.name} ${meal.restaurant} ${meal.tags.join(" ")}`.toLowerCase().includes(query);
+        return matchesText && (category === "all" || meal.category === category)
+          && (restaurantLocation === "all" || meal.location === restaurantLocation);
+      });
+      byId("menu-grid").innerHTML = matches.length
+        ? matches.map(mealCard).join("")
+        : '<div class="empty" style="grid-column:1/-1">No meals found. Try another search or food type.</div>';
+    }
+
+    function renderOrders() {
+      const orders = [...state.orders].reverse();
+      byId("orders-list").innerHTML = orders.length ? orders.map((order) => {
+        const items = orderItems(order);
+        const itemSummary = items.map((item) => `${item.name}${item.quantity > 1 ? ` × ${item.quantity}` : ""}`).join(", ");
+        const meal = MENU.find((item) => item.name === items[0].name);
+        return `<article class="order-card">
+          <div class="order-info"><span class="order-badge" aria-hidden="true">${meal ? meal.emoji : "🍽️"}</span>
+            <div><h3>${escapeHtml(itemSummary)} <span style="color:#9a9e94;font-weight:500">· #${escapeHtml(order.order_id)}</span></h3>
+              <p>${escapeHtml(order.restaurant)} · ${escapeHtml(order.area)} · about ${escapeHtml(order.eta_minutes)} min<br>
+                <span class="order-countdown" data-order-status="${escapeHtml(order.status)}" data-delivery-deadline="${escapeHtml(order.delivery_deadline || "")}"></span></p></div>
+          </div>
+          <div class="order-actions"><span class="status">${escapeHtml(order.status)}</span><span class="order-total">${money(order.total)}</span>
+            <button class="secondary" type="button" data-invoice="${escapeHtml(order.order_id)}">Invoice</button></div>
+        </article>`;
+      }).join("") : `<div class="empty-state"><div class="icon">🧾</div><h3>No orders just yet</h3><p>When you order something tasty, it'll show up here.</p><button class="primary" type="button" data-go="menu">Explore the menu</button></div>`;
+      updateOrderCountdowns();
+    }
+
+    function orderItems(order) {
+      if (Array.isArray(order.items) && order.items.length) return order.items;
+      return [{ name: order.meal, quantity: 1, line_total: order.subtotal }];
+    }
+
+    function renderAdminOrders(orders) {
+      const pastStatuses = new Set(["Delivered", "Cancelled"]);
+      const currentOrders = orders.filter((order) => !pastStatuses.has(order.status));
+      const pastOrders = orders.filter((order) => pastStatuses.has(order.status));
+      byId("admin-current-count").textContent = String(currentOrders.length);
+      byId("admin-past-count").textContent = String(pastOrders.length);
+      byId("admin-total-count").textContent = String(orders.length);
+      const renderOrder = (order) => `<article class="admin-order">
+        <div class="admin-order-head"><h3>${escapeHtml(order.meal)} · #${escapeHtml(order.order_id)}</h3><span>${escapeHtml(order.issued_at)}</span></div>
+        <div class="admin-order-details"><strong>${escapeHtml(order.customer_name)}</strong> · ${escapeHtml(order.customer_phone)}<br>
+          ${orderItems(order).map((item) => `${escapeHtml(item.name)} × ${escapeHtml(item.quantity)} · ${money(item.line_total)}`).join("<br>")}<br>
+          ${escapeHtml(order.delivery_address)} · ${escapeHtml(order.area)}<br>
+          ${escapeHtml(order.restaurant)} · ${escapeHtml(order.eta_minutes)} min · ${money(order.total)}<br>
+          Status: ${escapeHtml(order.status)}<br>
+          <span class="order-countdown admin-countdown" data-order-status="${escapeHtml(order.status)}" data-delivery-deadline="${escapeHtml(order.delivery_deadline || "")}"></span></div>
+        <div class="admin-order-actions"><label class="sr-only" for="admin-status-${escapeHtml(order.order_id)}">Update order status</label>
+          <select id="admin-status-${escapeHtml(order.order_id)}" data-admin-status="${escapeHtml(order.order_id)}">
+            ${["Restaurant is preparing your food", "Out for delivery", "Delivered", "Cancelled"].map((status) => `<option value="${escapeHtml(status)}"${status === order.status ? " selected" : ""}>${escapeHtml(status)}</option>`).join("")}
+          </select>
+          <button class="primary" type="button" data-admin-update="${escapeHtml(order.order_id)}">Update status</button>
+        </div>
+      </article>`;
+      byId("admin-current-orders").innerHTML = currentOrders.length
+        ? currentOrders.map(renderOrder).join("")
+        : '<div class="empty">There are no current orders.</div>';
+      byId("admin-past-orders").innerHTML = pastOrders.length
+        ? pastOrders.map(renderOrder).join("")
+        : '<div class="empty">Completed and cancelled orders will appear here.</div>';
+      updateOrderCountdowns();
+    }
+
+    function updateOrderCountdowns() {
+      document.querySelectorAll("[data-delivery-deadline]").forEach((element) => {
+        const status = element.dataset.orderStatus;
+        if (status === "Delivered" || status === "Cancelled") {
+          element.textContent = `Order ${status.toLowerCase()}`;
+          element.classList.remove("overdue");
+          element.classList.remove("ended");
+          return;
+        }
+        const deadline = Number(element.dataset.deliveryDeadline);
+        if (!Number.isFinite(deadline) || deadline <= 0) {
+          element.textContent = "Delivery countdown unavailable";
+          element.classList.remove("overdue", "ended");
+          return;
+        }
+        const remainingSeconds = Math.ceil(deadline - Date.now() / 1000);
+        if (remainingSeconds > 0) {
+          const minutesText = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
+          const secondsText = String(remainingSeconds % 60).padStart(2, "0");
+          element.textContent = `Estimated delivery in ${minutesText}:${secondsText}`;
+          element.classList.remove("overdue");
+          element.classList.remove("ended");
+        } else {
+          element.textContent = "Estimated delivery time reached · waiting for order update";
+          element.classList.remove("overdue");
+          element.classList.add("ended");
+        }
+      });
+    }
+
+    async function refreshAdminDashboard() {
+      try {
+        const sessionResponse = await fetch("/api/admin/session", { cache: "no-store" });
+        const session = await sessionResponse.json();
+        byId("admin-unconfigured").classList.toggle("hidden", session.configured);
+        byId("admin-login-form").classList.toggle("hidden", !session.configured || session.authenticated);
+        byId("admin-dashboard").classList.toggle("hidden", !session.authenticated);
+        if (!session.configured || !session.authenticated) return;
+        const response = await fetch("/api/admin/orders", { cache: "no-store" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Could not load orders.");
+        renderAdminOrders(result.orders);
+      } catch (error) {
+        notify(`Admin dashboard error: ${error.message}`, true);
+      }
+    }
+
+    async function updateAdminOrder(orderId) {
+      const statusSelect = document.querySelector(`[data-admin-status="${CSS.escape(orderId)}"]`);
+      if (!statusSelect) return;
+      try {
+        const response = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: statusSelect.value })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Could not update order status.");
+        notify(`Order #${orderId} updated.`);
+        await refreshAdminDashboard();
+      } catch (error) {
+        notify(`Could not update order: ${error.message}`, true);
+      }
+    }
+
+    function fillLocations() {
+      const options = Object.keys(LOCATIONS).map((location) => `<option value="${location}">${location}</option>`).join("");
+      byId("recommend-location").innerHTML = options;
+      byId("menu-location").innerHTML = `<option value="all">All areas</option>${options}`;
+      byId("recommend-location").value = selectedLocation;
+    }
+
+    function showPage(page) {
+      document.querySelectorAll(".page").forEach((section) => section.classList.toggle("active", section.id === `page-${page}`));
+      document.querySelectorAll(".nav [data-page]").forEach((button) => button.classList.toggle("active", button.dataset.page === page));
+      if (page === "menu") renderMenu();
+      if (page === "orders") renderOrders();
+      if (page === "admin") refreshAdminDashboard();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderCheckout() {
+      const items = cartItems();
+      if (!items.length) {
+        byId("checkout-summary").innerHTML = '<div class="empty">Your cart is empty. Add a dish from the menu to get started.</div>';
+        byId("place-order-button").disabled = true;
+        return;
+      }
+      const restaurants = new Map();
+      let subtotal = 0;
+      let eta = 0;
+      const rows = items.map(({ meal, quantity }) => {
+        const travel = estimateDelivery(meal, selectedLocation);
+        subtotal += meal.price * quantity;
+        eta = Math.max(eta, travel.eta);
+        restaurants.set(meal.restaurant, travel.distance);
+        return `<div class="cart-item"><div><strong>${escapeHtml(meal.emoji)} &nbsp; ${escapeHtml(meal.name)}</strong><small>${escapeHtml(meal.restaurant)} · ${money(meal.price)} each</small></div>
+          <div class="cart-controls"><button type="button" data-cart-decrement="${meal.id}" aria-label="Remove one ${escapeHtml(meal.name)}">−</button><span>${quantity}</span><button type="button" data-cart-increment="${meal.id}" aria-label="Add one ${escapeHtml(meal.name)}">+</button><strong>${money(meal.price * quantity)}</strong><button class="cart-remove" type="button" data-cart-remove="${meal.id}">Remove</button></div></div>`;
+      });
+      const deliveryFee = [...restaurants.values()].reduce((total, distance) => total + 25 + Math.ceil(distance * 5), 0);
+      const tax = Math.round((subtotal + deliveryFee) * TAX_RATE * 100) / 100;
+      const total = Math.round((subtotal + deliveryFee + tax) * 100) / 100;
+      byId("checkout-summary").innerHTML = `${rows.join("")}<div class="bill">
+        <div class="bill-row"><span>Subtotal</span><span>${money(subtotal)}</span></div>
+        <div class="bill-row"><span>Delivery · ${restaurants.size} restaurant${restaurants.size === 1 ? "" : "s"}</span><span>${money(deliveryFee)}</span></div>
+        <div class="bill-row"><span>Demo tax (5%)</span><span>${money(tax)}</span></div>
+        <div class="bill-row total"><span>Total</span><span>${money(total)}</span></div>
+        <div class="bill-row"><span>Estimated delivery</span><span>${eta} min</span></div></div>`;
+      byId("place-order-button").disabled = false;
+      byId("checkout-modal").classList.add("open");
+    }
+
+    function openCart() {
+      renderCheckout();
+      if (!byId("delivery-address").value) byId("delivery-address").value = selectedLocation;
+      byId("checkout-modal").classList.add("open");
+      if (cartItems().length) byId("customer-name").focus();
+    }
+
+    function showInvoice(order) {
+      byId("invoice-content").innerHTML = `<header class="invoice-brand"><div><h2>FoodDash</h2><p>Food delivery service · Assignment prototype<br><strong>SAMPLE INVOICE</strong></p></div>
+          <div class="invoice-meta"><strong>Invoice #${escapeHtml(order.order_id)}</strong><br>Issued ${escapeHtml(order.issued_at)}<br>${escapeHtml(order.status)}</div></header>
+        <div class="invoice-parties"><div class="invoice-box"><strong>Restaurant</strong>${escapeHtml(order.restaurant)}<br>FoodDash Demo partner</div>
+          <div class="invoice-box"><strong>Bill to / Deliver to</strong>${escapeHtml(order.customer_name)}<br>${escapeHtml(order.customer_phone)}<br>${escapeHtml(order.delivery_address)}</div></div>
+        ${orderItems(order).map((item) => `<div class="invoice-line"><strong>${escapeHtml(item.name)}</strong><span>Qty ${escapeHtml(item.quantity)}</span><span>${money(item.line_total)}</span></div>`).join("")}
+        <div class="invoice-totals"><div class="bill-row"><span>Subtotal</span><span>${money(order.subtotal)}</span></div>
+          <div class="bill-row"><span>Delivery fee</span><span>${money(order.delivery_fee)}</span></div>
+          <div class="bill-row"><span>Demo tax (5%)</span><span>${money(order.tax)}</span></div>
+          <div class="bill-row total"><span>Total paid</span><span>${money(order.total)}</span></div></div>
+        <footer class="invoice-note">Estimated delivery: ${escapeHtml(order.eta_minutes)} minutes. This is a classroom demo invoice. Business details and the sample tax rate are placeholders.</footer>`;
+      byId("invoice-modal").classList.add("open");
+    }
+
+    document.addEventListener("click", (event) => {
+      const target = event.target.closest("button");
+      if (!target) return;
+      if (target.dataset.page) showPage(target.dataset.page);
+      if (target.dataset.go) showPage(target.dataset.go);
+      if (target.dataset.close) byId(target.dataset.close).classList.remove("open");
+      if (target.dataset.chatPrompt) sendChatMessage(target.dataset.chatPrompt);
+      if (target.hasAttribute("data-open-cart")) openCart();
+      if (target.dataset.addCart) {
+        const meal = MENU.find((item) => item.id === Number(target.dataset.addCart));
+        if (meal) addToCart(meal);
+      }
+      if (target.dataset.cartIncrement || target.dataset.cartDecrement || target.dataset.cartRemove) {
+        const mealId = Number(target.dataset.cartIncrement || target.dataset.cartDecrement || target.dataset.cartRemove);
+        const entry = state.cart.find((item) => item.meal_id === mealId);
+        if (target.dataset.cartRemove || (target.dataset.cartDecrement && entry && entry.quantity === 1)) {
+          state.cart = state.cart.filter((item) => item.meal_id !== mealId);
+        } else if (entry && target.dataset.cartDecrement) {
+          entry.quantity -= 1;
+        } else if (entry && target.dataset.cartIncrement && entry.quantity < 20) {
+          entry.quantity += 1;
+        }
+        saveState();
+        updateCartCount();
+        renderCheckout();
+      }
+      if (target.dataset.invoice) {
+        const order = state.orders.find((item) => String(item.order_id) === target.dataset.invoice);
+        if (order) showInvoice(order);
+      }
+      if (target.dataset.adminUpdate) updateAdminOrder(target.dataset.adminUpdate);
+    });
+
+    document.addEventListener("click", (event) => {
+      if (event.target.classList.contains("modal-backdrop")) event.target.classList.remove("open");
+    });
+
+    byId("menu-search").addEventListener("input", renderMenu);
+    byId("menu-category").addEventListener("change", renderMenu);
+    byId("menu-location").addEventListener("change", renderMenu);
+    byId("chat-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const input = byId("chat-input");
+      sendChatMessage(input.value);
+      input.value = "";
+      input.focus();
+    });
+    byId("admin-login-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const passwordInput = byId("admin-password");
+      const notice = byId("admin-notice");
+      notice.classList.add("hidden");
+      try {
+        const response = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: passwordInput.value })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Admin sign in failed.");
+        passwordInput.value = "";
+        await refreshAdminDashboard();
+      } catch (error) {
+        notice.textContent = error.message;
+        notice.classList.remove("hidden");
+      }
+    });
+    byId("admin-refresh").addEventListener("click", refreshAdminDashboard);
+    byId("admin-logout").addEventListener("click", async () => {
+      try {
+        const response = await fetch("/api/admin/logout", { method: "POST" });
+        if (!response.ok) throw new Error("Sign out failed.");
+        await refreshAdminDashboard();
+      } catch (error) {
+        notify(error.message, true);
+      }
+    });
+    byId("recommend-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const budget = Number(byId("recommend-budget").value);
+      const maxEta = Number(byId("recommend-eta").value);
+      if (!Number.isFinite(budget) || budget < 1 || !Number.isFinite(maxEta) || maxEta < 1) {
+        notify("Enter a budget and delivery time of at least 1.", true);
+        return;
+      }
+      selectedLocation = byId("recommend-location").value;
+      byId("location-label").textContent = selectedLocation;
+      const category = byId("recommend-category").value;
+      const matches = MENU.map((meal) => {
+        const travel = estimateDelivery(meal, selectedLocation);
+        return { meal, ...travel, score: recommendationScore(meal, budget, travel.eta) };
+      }).filter(({ meal, eta }) => (category === "all" || meal.category === category) && meal.price <= budget && eta <= maxEta)
+        .sort((a, b) => b.score - a.score).slice(0, 5);
+      byId("recommend-title").textContent = matches.length ? "Your top matches" : "No matches this time";
+      byId("recommend-hint").textContent = matches.length
+        ? `Sorted for ${selectedLocation} · based on rating, budget fit, delivery time${state.order_history.length ? " and past orders" : ""}.`
+        : "Try increasing your budget or delivery time, or choose another food type.";
+      byId("recommend-list").innerHTML = matches.length ? matches.map(({ meal, eta, distance }) => `<article class="result-card">
+        <div class="result-emoji" aria-hidden="true">${meal.emoji}</div>
+        <div><h3>${escapeHtml(meal.name)} <span class="rating">★ ${meal.rating.toFixed(1)}</span></h3>
+          <p>${escapeHtml(meal.restaurant)} · ${escapeHtml(meal.category)}<br>◷ ${eta} min · ${distance.toFixed(1)} km away</p></div>
+        <div class="result-price"><strong>₹${meal.price}</strong><button class="primary" type="button" data-add-cart="${meal.id}">Add</button></div>
+      </article>`).join("") : '<div class="empty">No meals match all those choices. Try a higher budget or delivery time.</div>';
+    });
+
+    byId("checkout-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!state.cart.length) {
+        notify("Add at least one dish to your cart before placing an order.", true);
+        return;
+      }
+      const customerName = byId("customer-name").value.trim() || "Walk-in Customer";
+      const customerPhone = byId("customer-phone").value.trim() || "Not provided";
+      const deliveryAddress = byId("delivery-address").value.trim();
+      if (!deliveryAddress) {
+        byId("delivery-address").focus();
+        notify("Enter a delivery address to continue.", true);
+        return;
+      }
+      let order;
+      try {
+        const response = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: state.cart,
+            area: selectedLocation,
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            delivery_address: deliveryAddress
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Could not place your order.");
+        order = result.order;
+      } catch (error) {
+        notify(`Could not place your order: ${error.message}`, true);
+        return;
+      }
+      state.orders.push(order);
+      cartItems().forEach(({ meal, quantity }) => {
+        for (let count = 0; count < quantity; count += 1) state.order_history.push(meal.name);
+      });
+      state.cart = [];
+      saveState();
+      updateCartCount();
+      byId("checkout-modal").classList.remove("open");
+      byId("checkout-form").reset();
+      renderHome();
+      renderOrders();
+      appendChatMessage(`Order #${order.order_id} placed for ${order.meal}. Your total is ${money(order.total)} and the estimated delivery time is ${order.eta_minutes} minutes.`);
+      showInvoice(order);
+      notify(`Order #${order.order_id} placed!`);
+    });
+
+    byId("print-invoice").addEventListener("click", () => window.print());
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") document.querySelectorAll(".modal-backdrop.open").forEach((modal) => modal.classList.remove("open"));
+    });
+
+    loadState();
+    updateCartCount();
+    fillLocations();
+    renderHome();
+    window.setInterval(updateOrderCountdowns, 1000);
+  </script>
+</body>
+</html>
